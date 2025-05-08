@@ -1,52 +1,50 @@
+// BookRepository.kt
 package ie.setu.bookapp.repository
 
+import ie.setu.bookapp.database.BookDao
 import ie.setu.bookapp.model.Book
+import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 
-class BookRepository {
-    private val books = mutableListOf<Book>()
+class BookRepository(private val bookDao: BookDao) {
 
-    init {
-        Timber.d("BookRepository initialized")
+    val allBooks: Flow<List<Book>> = bookDao.getAllBooks()
+    val favoriteBooks: Flow<List<Book>> = bookDao.getFavoriteBooks()
+    val downloadedBooks: Flow<List<Book>> = bookDao.getDownloadedBooks()
+
+    fun getBooksByCategory(category: String): Flow<List<Book>> {
+        return bookDao.getBooksByCategory(category)
     }
 
-    // Create: Add a book
-    fun addBook(book: Book) {
-        books.add(book)
-        Timber.d("Book added: ${book.title}")
-    }
-
-    // Read: Get all books
-    fun getBooks(): List<Book> {
-        Timber.d("Fetching all books")
-        return books
-    }
-
-    // Read: Get a book by ID
-    fun getBookById(id: Int): Book? {
+    fun getBookById(id: Int): Flow<Book> {
         Timber.d("Fetching book with ID: $id")
-        return books.find { it.id == id }
+        return bookDao.getBookById(id)
     }
 
-    // Update: Update book details
-    fun updateBook(updatedBook: Book) {
-        val index = books.indexOfFirst { it.id == updatedBook.id }
-        if (index != -1) {
-            books[index] = updatedBook
-            Timber.d("Book updated: ${updatedBook.title}")
-        } else {
-            Timber.d("Book not found to update: ${updatedBook.title}")
-        }
+    suspend fun insertBook(book: Book) {
+        Timber.d("Book added: ${book.title}")
+        bookDao.insertBook(book)
     }
 
-    // Delete: Remove a book by ID
-    fun deleteBook(id: Int) {
-        val book = getBookById(id)
-        if (book != null) {
-            books.remove(book)
-            Timber.d("Book deleted: ${book.title}")
-        } else {
-            Timber.d("Book not found to delete with ID: $id")
-        }
+    suspend fun updateBook(book: Book) {
+        Timber.d("Book updated: ${book.title}")
+        bookDao.updateBook(book)
+    }
+
+    suspend fun deleteBook(book: Book) {
+        Timber.d("Book deleted: ${book.title}")
+        bookDao.deleteBook(book)
+    }
+
+    suspend fun toggleFavorite(book: Book) {
+        val updatedBook = book.copy(isFavorite = !book.isFavorite)
+        Timber.d("Book favorite toggled: ${book.title}, isFavorite: ${updatedBook.isFavorite}")
+        bookDao.updateBook(updatedBook)
+    }
+
+    suspend fun toggleDownload(book: Book) {
+        val updatedBook = book.copy(isDownloaded = !book.isDownloaded)
+        Timber.d("Book download toggled: ${book.title}, isDownloaded: ${updatedBook.isDownloaded}")
+        bookDao.updateBook(updatedBook)
     }
 }

@@ -1,21 +1,22 @@
 package ie.setu.bookapp.model
 
 import timber.log.Timber
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
+@Entity(tableName = "books")
 data class Book(
-    var id: Int,
-    var title: String,
-    var author: String,
-    var description: String,
-    var isFavorite: Boolean = false
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val title: String,
+    val author: String,
+    val description: String,
+    val isFavorite: Boolean = false,
+    val coverUrl: String? = null,
+    val isDownloaded: Boolean = false,
+    val category: String = "Fiction"
 ) {
     init {
         Timber.d("Book created: $title by $author")
-    }
-
-    // Update the favorite status
-    fun toggleFavorite() {
-        isFavorite = !isFavorite
-        Timber.d("Favorite status of '$title' changed to: $isFavorite")
     }
 }

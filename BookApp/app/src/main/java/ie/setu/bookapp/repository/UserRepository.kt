@@ -1,52 +1,37 @@
+// UserRepository.kt
 package ie.setu.bookapp.repository
 
+import ie.setu.bookapp.database.UserDao
 import ie.setu.bookapp.model.User
+import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 
-class UserRepository {
-    private val users = mutableListOf<User>()
+class UserRepository(private val userDao: UserDao) {
 
-    init {
-        Timber.d("UserRepository initialized")
-    }
+    val allUsers: Flow<List<User>> = userDao.getAllUsers()
 
-    // Create: Add a user
-    fun addUser(user: User) {
-        users.add(user)
-        Timber.d("User added: ${user.firstName} ${user.lastName}")
-    }
-
-    // Read: Get all users
-    fun getUsers(): List<User> {
-        Timber.d("Fetching all users")
-        return users
-    }
-
-    // Read: Get a user by email
-    fun getUserByEmail(email: String): User? {
+    fun getUserByEmail(email: String): Flow<User?> {
         Timber.d("Fetching user with email: $email")
-        return users.find { it.email == email }
+        return userDao.getUserByEmail(email)
     }
 
-    // Update: Update user details
-    fun updateUser(updatedUser: User) {
-        val index = users.indexOfFirst { it.email == updatedUser.email }
-        if (index != -1) {
-            users[index] = updatedUser
-            Timber.d("User updated: ${updatedUser.firstName} ${updatedUser.lastName}")
-        } else {
-            Timber.d("User not found to update: ${updatedUser.firstName} ${updatedUser.lastName}")
-        }
+    suspend fun insertUser(user: User) {
+        Timber.d("User added: ${user.firstName} ${user.lastName}")
+        userDao.insertUser(user)
     }
 
-    // Delete: Remove a user by email
-    fun deleteUser(email: String) {
-        val user = getUserByEmail(email)
-        if (user != null) {
-            users.remove(user)
-            Timber.d("User deleted: ${user.firstName} ${user.lastName}")
-        } else {
-            Timber.d("User not found to delete with email: $email")
-        }
+    suspend fun updateUser(user: User) {
+        Timber.d("User updated: ${user.firstName} ${user.lastName}")
+        userDao.updateUser(user)
+    }
+
+    suspend fun deleteUser(user: User) {
+        Timber.d("User deleted: ${user.firstName} ${user.lastName}")
+        userDao.deleteUser(user)
+    }
+
+    suspend fun validateUser(email: String, password: String): User? {
+        Timber.d("Validating user: $email")
+        return userDao.validateUser(email, password)
     }
 }

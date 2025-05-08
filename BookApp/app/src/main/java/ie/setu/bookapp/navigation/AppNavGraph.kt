@@ -1,31 +1,70 @@
+// AppNavGraph.kt
 package ie.setu.bookapp.navigation
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import ie.setu.bookapp.view.LibraryActivity
-import ie.setu.bookapp.view.SignUpActivity
+import ie.setu.bookapp.view.*
+import ie.setu.bookapp.viewmodel.BookViewModel
+import ie.setu.bookapp.viewmodel.UserViewModel
 
-//@Composable
-//fun NavHostProvider(
-//    modifier: Modifier,
-//    navController: NavHostController,
-//    paddingValues: PaddingValues
-//) {
-//    NavHost(
-//        navController = navController,
-//        startDestination = AppDestinations.SIGN_UP,
-//        modifier = Modifier.padding(paddingValues = paddingValues)
-//    ) {
-//        composable(route = AppDestinations.SIGN_UP) {
-//            SignUpActivity(navController = navController) // Calling the SignUp Screen
-//        }
-//        composable(route = AppDestinations.LIBRARY) {
-//            LibraryActivity() // Calling the Library Screen
-//        }
-//    }
-//}
+@Composable
+fun AppNavGraph(
+    navController: NavHostController,
+    bookViewModel: BookViewModel,
+    userViewModel: UserViewModel
+) {
+    NavHost(
+        navController = navController,
+        startDestination = AppDestinations.LOGIN
+    ) {
+        composable(AppDestinations.LOGIN) {
+            LoginScreen(
+                userViewModel = userViewModel,
+                onLoginSuccess = { navController.navigate(AppDestinations.HOME) },
+                onSignUpClick = { navController.navigate(AppDestinations.SIGN_UP) }
+            )
+        }
+
+        composable(AppDestinations.SIGN_UP) {
+            SignUpScreen(
+                userViewModel = userViewModel,
+                onSignUpSuccess = { navController.navigate(AppDestinations.HOME) },
+                onLoginClick = { navController.navigate(AppDestinations.LOGIN) }
+            )
+        }
+
+        composable(AppDestinations.HOME) {
+            HomeScreen(
+                bookViewModel = bookViewModel,
+                onLibraryClick = { navController.navigate(AppDestinations.LIBRARY) },
+                onProfileClick = { navController.navigate(AppDestinations.PROFILE) }
+            )
+        }
+
+        composable(AppDestinations.LIBRARY) {
+            LibraryScreen(
+                bookViewModel = bookViewModel,
+                onHomeClick = { navController.navigate(AppDestinations.HOME) },
+                onProfileClick = { navController.navigate(AppDestinations.PROFILE) }
+            )
+        }
+
+        composable(AppDestinations.PROFILE) {
+            ProfileScreen(
+                userViewModel = userViewModel,
+                onHomeClick = { navController.navigate(AppDestinations.HOME) },
+                onLibraryClick = { navController.navigate(AppDestinations.LIBRARY) },
+                onEditProfileClick = { navController.navigate(AppDestinations.PROFILE_EDIT) }
+            )
+        }
+
+        composable(AppDestinations.PROFILE_EDIT) {
+            ProfileEditScreen(
+                userViewModel = userViewModel,
+                onBackClick = { navController.navigateUp() }
+            )
+        }
+    }
+}

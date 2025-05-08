@@ -1,20 +1,20 @@
 package ie.setu.bookapp.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import timber.log.Timber
 
+@Entity(tableName = "users")
 data class User(
-    var firstName: String = "",
-    var lastName: String = "",
-    var email: String = "",
-    var password: String = ""
+    val firstName: String = "",
+    val lastName: String = "",
+    @PrimaryKey
+    val email: String = "",
+    val password: String = "",
+    val phoneNumber: String = "",
+    val profileImageUrl: String? = null
 ) {
     init {
         Timber.d("User created: $firstName $lastName")
-    }
-
-    // Update user email
-    fun updateEmail(newEmail: String) {
-        Timber.d("User email changed from $email to $newEmail")
-        email = newEmail
     }
 }
