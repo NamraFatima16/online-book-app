@@ -1,6 +1,5 @@
 package ie.setu.bookapp.model
 
-import timber.log.Timber
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -8,15 +7,25 @@ import androidx.room.PrimaryKey
 data class Book(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
+
     val title: String,
     val author: String,
-    val description: String,
+    val description: String? = null,
+    val category: String,
+
     val isFavorite: Boolean = false,
-    val coverUrl: String? = null,
     val isDownloaded: Boolean = false,
-    val category: String = "Fiction"
-) {
-    init {
-        Timber.d("Book created: $title by $author")
-    }
-}
+
+    // Additional fields for more book information
+    val imageUrl: String? = null,
+    val publisher: String? = null,
+    val publishedDate: String? = null,
+    val pageCount: Int? = null,
+    val isbn: String? = null,
+    val language: String? = null,
+    val rating: Float? = null,
+
+    // Timestamps for tracking
+    val dateAdded: Long = System.currentTimeMillis(),
+    val lastModified: Long = System.currentTimeMillis()
+)

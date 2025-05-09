@@ -1,5 +1,5 @@
 // BottomNavBar.kt
-package ie.setu.bookapp.components
+package ie.setu.bookapp.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
