@@ -72,7 +72,7 @@ fun HomeScreen(
                 selectedCategory = selectedCategory,
                 onCategorySelected = { category ->
                     selectedCategory = category
-                    // In a real app, you would call bookViewModel.getBooksByCategory(category)
+
                 }
             )
 
@@ -82,7 +82,7 @@ fun HomeScreen(
                 onBookClick = onBookClick,
                 onFavoriteClick = { book, isFavorite ->
                     Timber.d("Book favorite toggled: ${book.title}, isFavorite: $isFavorite")
-                    // In a real app with real data: bookViewModel.toggleFavorite(book)
+
                 },
                 contentPadding = PaddingValues(bottom = 16.dp)
             )

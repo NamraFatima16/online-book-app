@@ -9,11 +9,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Divider
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +43,7 @@ fun BookDetailsScreen(
     bookId: Int,
     bookViewModel: BookViewModel,
     onBackClick: () -> Unit,
+    onEditClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val book by bookViewModel.getBookById(bookId).collectAsState(initial = null)
@@ -49,7 +51,7 @@ fun BookDetailsScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        // Top App Bar
+
         AppTopBar(
             title = "Book Details",
             showBackButton = true,
@@ -57,10 +59,9 @@ fun BookDetailsScreen(
         )
 
         if (book == null) {
-            // Loading state
+
             LoadingState()
         } else {
-            // Book details content
             book?.let { bookDetails ->
                 BookDetailsContent(
                     title = bookDetails.title,
@@ -71,7 +72,9 @@ fun BookDetailsScreen(
                     onFavoriteClick = { isFavorite ->
                         Timber.d("Favorite toggled: ${bookDetails.title}, isFavorite: $isFavorite")
                         bookViewModel.toggleFavorite(bookDetails)
-                    }
+                    },
+                    bookId = bookId,
+                    onEditClick = onEditClick
                 )
             }
         }
@@ -86,109 +89,99 @@ fun BookDetailsContent(
     description: String,
     isFavorite: Boolean,
     onFavoriteClick: (Boolean) -> Unit,
+    bookId: Int,
+    onEditClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var favoriteState by remember { mutableStateOf(isFavorite) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Book Cover
-        val colorList = listOf(
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.secondaryContainer,
-            MaterialTheme.colorScheme.tertiaryContainer
-        )
-        val coverColor = colorList[title.length % colorList.size]
-
-        Box(
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .background(coverColor),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
-            Text(
-                text = title.first().toString(),
-                fontSize = 48.sp,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+            // Book Cover Color
+            val colorList = listOf(
+                MaterialTheme.colorScheme.primaryContainer,
+                MaterialTheme.colorScheme.secondaryContainer,
+                MaterialTheme.colorScheme.tertiaryContainer
             )
-        }
+            val coverColor = colorList[title.length % colorList.size]
 
-        // Book Title and Favorite Icon
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = title,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f)
-            )
-
-            IconButton(
-                onClick = {
-                    favoriteState = !favoriteState
-                    onFavoriteClick(favoriteState)
-                }
+            // Cover
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .background(coverColor),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = if (favoriteState) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = if (favoriteState) "Remove from favorites" else "Add to favorites",
-                    tint = if (favoriteState) Color.Red else MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(28.dp)
+                Text(
+                    text = title.first().toString(),
+                    fontSize = 48.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
             }
+
+            // Title + Favorite
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+
+                IconButton(onClick = {
+                    favoriteState = !favoriteState
+                    onFavoriteClick(favoriteState)
+                }) {
+                    Icon(
+                        imageVector = if (favoriteState) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = null,
+                        tint = if (favoriteState) Color.Red else MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            Text("By $author", fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp))
+            Text("Category: $category", fontSize = 16.sp, modifier = Modifier.padding(vertical = 4.dp))
+
+            Divider(modifier = Modifier.padding(vertical = 16.dp))
+
+            Text("Description", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(description, fontSize = 16.sp, lineHeight = 24.sp)
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            PrimaryButton(
+                text = "Download Book",
+                onClick = {
+                    Timber.d("Download button clicked for: $title")
+                },
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
         }
 
-        // Author
-        Text(
-            text = "By $author",
-            fontSize = 18.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
 
-        // Category
-        Text(
-            text = "Category: $category",
-            fontSize = 16.sp,
-            modifier = Modifier.padding(vertical = 4.dp)
-        )
-
-        Divider(modifier = Modifier.padding(vertical = 16.dp))
-
-        // Description
-        Text(
-            text = "Description",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        Text(
-            text = description,
-            fontSize = 16.sp,
-            lineHeight = 24.sp
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Download Button
-        PrimaryButton(
-            text = "Download Book",
+        FloatingActionButton(
             onClick = {
-                Timber.d("Download button clicked for: $title")
-                // In a real app, you would call bookViewModel.toggleDownload(book)
+                Timber.d("Edit button clicked for book: $title")
+                onEditClick(bookId)
             },
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            Icon(Icons.Default.Edit, contentDescription = "Edit Book")
+        }
     }
 }

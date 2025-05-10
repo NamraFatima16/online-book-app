@@ -1,15 +1,25 @@
 package ie.setu.bookapp.view
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +29,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,7 +39,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import ie.setu.bookapp.model.Book
-import ie.setu.bookapp.ui.components.BooksGrid
+import ie.setu.bookapp.ui.components.BookCard
 import ie.setu.bookapp.ui.components.EmptyState
 import ie.setu.bookapp.ui.components.LoadingState
 import ie.setu.bookapp.viewmodel.BookViewModel
@@ -41,51 +52,50 @@ fun SearchScreen(
     bookViewModel: BookViewModel,
     onBackClick: () -> Unit,
     onBookClick: (Int) -> Unit,
+    onEditBook: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var searchResults by remember { mutableStateOf<List<Book>>(emptyList()) }
     var isSearching by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
 
-    // Sample data for testing
-    val allBooks = remember {
-        listOf(
-            Book(1, "Atomic Habits", "James Clear", "Small changes, remarkable results...", "Self-Help"),
-            Book(2, "It Starts With Us", "Colleen Hoover", "The sequel to It Ends With Us...", "Romance"),
-            Book(3, "It Ends With Us", "Colleen Hoover", "A brave and heartbreaking novel...", "Romance"),
-            Book(4, "Body Shot", "Amy Knupp", "A steamy romance novel...", "Romance"),
-            Book(5, "Milk and Honey", "Rupi Kaur", "A collection of poetry and prose...", "Poetry"),
-            Book(6, "Harry Potter", "J.K. Rowling", "The boy who lived comes to Hogwarts...", "Fantasy"),
-            Book(7, "The Great Gatsby", "F. Scott Fitzgerald", "The story of the mysteriously wealthy...", "Fiction"),
-            Book(8, "The Catcher in the Rye", "J.D. Salinger", "The story of Holden Caulfield...", "Fiction")
-        )
-    }
+    // State for category filter
+    var showCategoryFilter by remember { mutableStateOf(false) }
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    val categories = listOf("All", "Fiction", "Non-Fiction", "Poetry", "Romance", "Fantasy", "Self-Help")
 
-    LaunchedEffect(Unit) {
-        // Focus the search field when the screen is shown
-        focusRequester.requestFocus()
-    }
+    // Collect books from ViewModel
+    val allBooks by bookViewModel.allBooks.collectAsState()
+    var searchResults by remember { mutableStateOf<List<Book>>(emptyList()) }
 
-    LaunchedEffect(searchQuery) {
+    // Effect to perform search
+    LaunchedEffect(searchQuery, selectedCategory) {
         isSearching = true
-        // Add a small delay to avoid too many searches while typing
-        delay(300)
+        delay(300) // Debounce
 
-        // Perform the search
-        if (searchQuery.isBlank()) {
+        if (searchQuery.isBlank() && selectedCategory == null) {
             searchResults = emptyList()
         } else {
-            // Filter books using proper null safety
-            searchResults = allBooks.filter { book ->
-                book.title.contains(searchQuery, ignoreCase = true) ||
-                        book.author.contains(searchQuery, ignoreCase = true) ||
-                        // Use safe call with description since it's nullable
-                        book.description?.contains(searchQuery, ignoreCase = true) ?: false ||
-                        book.category.contains(searchQuery, ignoreCase = true)
+            var results = if (searchQuery.isBlank()) {
+                allBooks
+            } else {
+                allBooks.filter { book ->
+                    book.title.contains(searchQuery, ignoreCase = true) ||
+                            book.author.contains(searchQuery, ignoreCase = true) ||
+                            (book.description?.contains(searchQuery, ignoreCase = true) ?: false) ||
+                            book.category.contains(searchQuery, ignoreCase = true)
+                }
             }
-            Timber.d("Search query: '$searchQuery', found ${searchResults.size} results")
+
+            // Apply category filter if selected
+            if (selectedCategory != null && selectedCategory != "All") {
+                results = results.filter { it.category == selectedCategory }
+            }
+
+            searchResults = results
+            Timber.d("Search query: '$searchQuery', category: $selectedCategory, found ${results.size} results")
         }
+
         isSearching = false
     }
 
@@ -126,8 +136,36 @@ fun SearchScreen(
                 IconButton(onClick = onBackClick) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                 }
+            },
+            actions = {
+                IconButton(onClick = { showCategoryFilter = !showCategoryFilter }) {
+                    Icon(
+                        imageVector = Icons.Default.FilterList,
+                        contentDescription = "Filter by Category"
+                    )
+                }
             }
         )
+
+        // Category filter chips
+        AnimatedVisibility(visible = showCategoryFilter) {
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(categories) { category ->
+                    FilterChip(
+                        selected = category == selectedCategory,
+                        onClick = {
+                            selectedCategory = if (category == selectedCategory) null else category
+                        },
+                        label = { Text(category) }
+                    )
+                }
+            }
+        }
 
         // Content
         Box(
@@ -137,22 +175,30 @@ fun SearchScreen(
                 isSearching -> {
                     LoadingState()
                 }
-                searchQuery.isBlank() -> {
-                    EmptyState(message = "Enter a search term to find books")
+                searchQuery.isBlank() && selectedCategory == null -> {
+                    EmptyState(message = "Enter a search term or select a category to find books")
                 }
                 searchResults.isEmpty() -> {
-                    EmptyState(message = "No books found for \"$searchQuery\"")
+                    EmptyState(message = "No books found for your search criteria")
                 }
                 else -> {
-                    BooksGrid(
-                        books = searchResults,
-                        onBookClick = onBookClick,
-                        onFavoriteClick = { book, isFavorite ->
-                            Timber.d("Book favorite toggled from search: ${book.title}, isFavorite: $isFavorite")
-                            // In a real app: bookViewModel.toggleFavorite(book)
-                        },
-                        contentPadding = PaddingValues(16.dp)
-                    )
+                    // Display search results in a list or grid
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        contentPadding = PaddingValues(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(searchResults) { book ->
+                            BookCard(
+                                book = book,
+                                onClick = { onBookClick(book.id) },
+                                onFavoriteClick = { isFavorite ->
+                                    bookViewModel.toggleFavorite(book)
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }

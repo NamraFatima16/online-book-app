@@ -3,7 +3,9 @@ package ie.setu.bookapp.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import ie.setu.bookapp.model.User
+import ie.setu.bookapp.repository.FirebaseAuthManager
 import ie.setu.bookapp.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,38 +16,43 @@ import timber.log.Timber
 
 class UserViewModel(private val repository: UserRepository) : ViewModel() {
 
-    // StateFlow for current user
+
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser
 
-    // StateFlow for login state
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn
 
-    // StateFlow for login error
     private val _loginError = MutableStateFlow<String?>(null)
     val loginError: StateFlow<String?> = _loginError
 
-    // StateFlow for signup error
     private val _signupError = MutableStateFlow<String?>(null)
     val signupError: StateFlow<String?> = _signupError
 
-    // StateFlow for user operation status
     private val _userOperationStatus = MutableStateFlow<UserOperationStatus>(UserOperationStatus.Idle)
     val userOperationStatus: StateFlow<UserOperationStatus> = _userOperationStatus
 
+    private val firebaseAuthManager = FirebaseAuthManager()
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _userOperationStatus.value = UserOperationStatus.Loading
             try {
-                val user = repository.validateUser(email, password)
-                if (user != null) {
-                    _currentUser.value = user
-                    _isLoggedIn.value = true
-                    _loginError.value = null
-                    _userOperationStatus.value = UserOperationStatus.Success
-                    Timber.d("User logged in: ${user.email}")
+                val firebaseUser = firebaseAuthManager.signInWithEmail(email, password)
+                if (firebaseUser != null) {
+                    // Get user data from Firestore
+                    val userData = firebaseAuthManager.getUserData(firebaseUser.uid)
+
+                    if (userData != null) {
+                        _currentUser.value = userData
+                        _isLoggedIn.value = true
+                        _loginError.value = null
+                        _userOperationStatus.value = UserOperationStatus.Success
+                        Timber.d("User logged in: ${userData.email}")
+                    } else {
+                        _loginError.value = "Failed to retrieve user data"
+                        _userOperationStatus.value = UserOperationStatus.Error("Failed to retrieve user data")
+                    }
                 } else {
                     _loginError.value = "Invalid email or password"
                     _userOperationStatus.value = UserOperationStatus.Error("Invalid email or password")
@@ -59,68 +66,91 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Log out current user
-     */
-    fun logout() {
-        _currentUser.value = null
-        _isLoggedIn.value = false
-        _userOperationStatus.value = UserOperationStatus.Idle
-        Timber.d("User logged out")
-    }
-
-    /**
-     * Register a new user
-     */
-    fun registerUser(
-        username: String,
-        email: String,
-        password: String,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
-    ) {
+    // Adding Google sign-in function
+    fun signInWithGoogle(googleAccount: GoogleSignInAccount) {
         viewModelScope.launch {
             _userOperationStatus.value = UserOperationStatus.Loading
             try {
-                // Check if email already exists
-                val existingUser = repository.getUserByEmail(email).first()
-                if (existingUser != null) {
-                    onError("Email already registered")
-                    _userOperationStatus.value = UserOperationStatus.Error("Email already registered")
-                    Timber.d("Registration failed: Email already exists")
-                    return@launch
+                val firebaseUser = firebaseAuthManager.signInWithGoogle(googleAccount)
+                if (firebaseUser != null) {
+                    // Get user data from Firestore
+                    val userData = firebaseAuthManager.getUserData(firebaseUser.uid)
+
+                    if (userData != null) {
+                        _currentUser.value = userData
+                        _isLoggedIn.value = true
+                        _loginError.value = null
+                        _userOperationStatus.value = UserOperationStatus.Success
+                        Timber.d("User logged in with Google: ${userData.email}")
+                    } else {
+                        _loginError.value = "Failed to retrieve user data"
+                        _userOperationStatus.value = UserOperationStatus.Error("Failed to retrieve user data")
+                    }
+                } else {
+                    _loginError.value = "Google sign-in failed"
+                    _userOperationStatus.value = UserOperationStatus.Error("Google sign-in failed")
+                    Timber.d("Google sign-in failed")
                 }
-
-                // Create a new user
-                val newUser = User(
-                    firstName = username,
-                    lastName = "",  // This could be expanded to capture last name separately
-                    email = email,
-                    password = password
-                )
-
-                // Insert the user
-                repository.insertUser(newUser)
-
-                // Update state
-                _currentUser.value = newUser
-                _isLoggedIn.value = true
-                _userOperationStatus.value = UserOperationStatus.Success
-
-                // Trigger success callback
-                onSuccess()
-                Timber.d("User registered successfully: $email")
             } catch (e: Exception) {
-                onError(e.message ?: "Registration failed")
-                _userOperationStatus.value = UserOperationStatus.Error("Registration error: ${e.localizedMessage}")
-                Timber.e(e, "Registration error")
+                _loginError.value = "Error during Google sign-in: ${e.message}"
+                _userOperationStatus.value = UserOperationStatus.Error("Google sign-in error: ${e.localizedMessage}")
+                Timber.e(e, "Google sign-in error")
             }
         }
     }
+    // logout function
+    fun logout() {
+        viewModelScope.launch {
+            firebaseAuthManager.signOut()
+            _currentUser.value = null
+            _isLoggedIn.value = false
+            _userOperationStatus.value = UserOperationStatus.Idle
+            Timber.d("User logged out")
+        }
+    }
 
-    /**
-     * Create new user account
-     */
+   //register user funtion
+   fun registerUser(
+       username: String,
+       email: String,
+       password: String,
+       onSuccess: () -> Unit,
+       onError: (String) -> Unit
+   ) {
+       viewModelScope.launch {
+           _userOperationStatus.value = UserOperationStatus.Loading
+           try {
+               val lastName = ""
+               val firebaseUser = firebaseAuthManager.registerWithEmail(email, password, username, lastName)
+
+               if (firebaseUser != null) {
+
+                   val userData = firebaseAuthManager.getUserData(firebaseUser.uid)
+
+                   if (userData != null) {
+                       _currentUser.value = userData
+                       _isLoggedIn.value = true
+                       _userOperationStatus.value = UserOperationStatus.Success
+                       onSuccess()
+                       Timber.d("User registered successfully: $email")
+                   } else {
+                       onError("Failed to retrieve user data")
+                       _userOperationStatus.value = UserOperationStatus.Error("Failed to retrieve user data")
+                   }
+               } else {
+                   onError("Registration failed")
+                   _userOperationStatus.value = UserOperationStatus.Error("Registration failed")
+                   Timber.d("Registration failed")
+               }
+           } catch (e: Exception) {
+               onError(e.message ?: "Registration failed")
+               _userOperationStatus.value = UserOperationStatus.Error("Registration error: ${e.localizedMessage}")
+               Timber.e(e, "Registration error")
+           }
+       }
+   }
+
+  //Creates new user
     fun createUser(user: User) {
         viewModelScope.launch {
             _userOperationStatus.value = UserOperationStatus.Loading
@@ -207,9 +237,7 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Delete user account
-     */
+   //deletes users accounts
     fun deleteUserAccount() {
         viewModelScope.launch {
             _userOperationStatus.value = UserOperationStatus.Loading

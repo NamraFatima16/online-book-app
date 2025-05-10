@@ -14,6 +14,7 @@ import androidx.navigation.navArgument
 import ie.setu.bookapp.BookApplication
 import ie.setu.bookapp.ui.components.MainAppScaffold
 import ie.setu.bookapp.view.BookDetailsScreen
+import ie.setu.bookapp.view.BookEditScreen
 import ie.setu.bookapp.view.HomeScreen
 import ie.setu.bookapp.view.LibraryScreen
 import ie.setu.bookapp.view.LoginScreen
@@ -22,6 +23,7 @@ import ie.setu.bookapp.view.ProfileScreen
 import ie.setu.bookapp.view.RegisterScreen
 import ie.setu.bookapp.view.SearchScreen
 import ie.setu.bookapp.view.SignUpScreen
+import ie.setu.bookapp.view.SplashScreen
 import ie.setu.bookapp.viewmodel.BookViewModel
 import ie.setu.bookapp.viewmodel.UserViewModel
 import timber.log.Timber
@@ -32,7 +34,7 @@ fun AppNavigation(
     navController: NavHostController = rememberNavController(),
     startDestination: String = AppDestinations.LOGIN
 ) {
-    // Create ViewModels with their factories
+
     val userViewModel: UserViewModel = viewModel(
         factory = UserViewModel.UserViewModelFactory(application.userRepository)
     )
@@ -41,13 +43,9 @@ fun AppNavigation(
         factory = BookViewModel.BookViewModelFactory(application.bookRepository)
     )
 
-    // For development testing, we'll start directly at HOME
-    // Change this back to: startDestination = if (isLoggedIn) AppDestinations.HOME else startDestination
-    // when you want the actual login flow to work
-
     NavHost(
         navController = navController,
-        startDestination = AppDestinations.HOME
+        startDestination = AppDestinations.SPLASH
     ) {
         // Login Screen
         composable(AppDestinations.LOGIN) {
@@ -205,6 +203,49 @@ fun AppNavigation(
                 onBackClick = {
                     Timber.d("Back from Book Details")
                     navController.popBackStack()
+                },
+                onEditClick = {
+                    Timber.d("Edit Book Clicked")
+                }
+            )
+        }
+
+        // Add Book Screen
+        composable(AppDestinations.BOOK_ADD) {
+            BookEditScreen(
+                bookId = 0, // 0 indicates a new book
+                bookViewModel = bookViewModel,
+                onSaveComplete = {
+                    Timber.d("Book added successfully")
+                    navController.popBackStack()
+                },
+                onBackClick = {
+                    Timber.d("Back from Book Add")
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // Book Edit Screen
+        composable(
+            route = AppDestinations.BOOK_EDIT,
+            arguments = listOf(
+                navArgument("bookId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val bookId = backStackEntry.arguments?.getInt("bookId") ?: -1
+            BookEditScreen(
+                bookId = bookId,
+                bookViewModel = bookViewModel,
+                onSaveComplete = {
+                    Timber.d("Book saved successfully")
+                    navController.popBackStack()
+                },
+                onBackClick = {
+                    Timber.d("Back from Book Edit")
+                    navController.popBackStack()
                 }
             )
         }
@@ -234,12 +275,28 @@ fun AppNavigation(
             )
         ) { backStackEntry ->
             val categoryName = backStackEntry.arguments?.getString("categoryName") ?: "Fiction"
-            // Since we don't have a CategoryScreen yet, we'll just navigate back
-            // You can implement this screen later
             LaunchedEffect(Unit) {
                 Timber.d("Category screen for $categoryName not implemented yet")
                 navController.popBackStack()
             }
         }
+
+
+        composable(AppDestinations.SPLASH) {
+            SplashScreen(
+                onNavigateToLogin = {
+                    navController.navigate(AppDestinations.LOGIN) {
+                        popUpTo(AppDestinations.SPLASH) { inclusive = true }
+                    }
+                },
+                onNavigateToHome = {
+                    navController.navigate(AppDestinations.HOME) {
+                        popUpTo(AppDestinations.SPLASH) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+
     }
 }

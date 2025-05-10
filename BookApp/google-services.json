@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "761549749808",
+    "project_id": "covertocover-1",
+    "storage_bucket": "covertocover-1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:761549749808:android:06ac0801f756c6a79177f5",
+        "android_client_info": {
+          "package_name": "ie.setu.bookapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAIWPdbnY33lFbmU8IPAWHzxu86BUUT76Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -9,33 +9,21 @@ import androidx.room.Update
 import ie.setu.bookapp.model.Book
 import kotlinx.coroutines.flow.Flow
 
-/**
- * Data Access Object (DAO) for Book entity.
- * Defines methods for accessing the book data in the database.
- */
 @Dao
 interface BookDao {
-    /**
-     * Get all books ordered by title
-     */
+
     @Query("SELECT * FROM books ORDER BY title ASC")
     fun getAllBooks(): Flow<List<Book>>
 
-    /**
-     * Get a specific book by ID
-     */
+
     @Query("SELECT * FROM books WHERE id = :bookId")
     fun getBookById(bookId: Int): Flow<Book?>
 
-    /**
-     * Get all books marked as favorites
-     */
+
     @Query("SELECT * FROM books WHERE isFavorite = 1 ORDER BY title ASC")
     fun getFavoriteBooks(): Flow<List<Book>>
 
-    /**
-     * Get all books by category
-     */
+
     @Query("SELECT * FROM books WHERE category = :category ORDER BY title ASC")
     fun getBooksByCategory(category: String): Flow<List<Book>>
 
@@ -43,6 +31,8 @@ interface BookDao {
     @Query("SELECT * FROM books WHERE isDownloaded = 1 ORDER BY title ASC")
     fun getDownloadedBooks(): Flow<List<Book>>
 
+    @Query("SELECT * FROM books WHERE id = :bookId LIMIT 1")
+    suspend fun getBookByIdSync(bookId: Int): Book?
 
     @Query("""
         SELECT * FROM books 

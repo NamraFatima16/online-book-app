@@ -47,14 +47,10 @@ class BookViewModel(private val repository: BookRepository) : ViewModel() {
         getBooksByCategory(_selectedCategory.value)
     }
 
-    /**
-     * Get a specific book by ID
-     */
+
     fun getBookById(id: Int) = repository.getBookById(id)
 
-    /**
-     * Fetch all books from repository
-     */
+
     fun fetchAllBooks() {
         viewModelScope.launch {
             _operationStatus.value = OperationStatus.Loading
@@ -71,9 +67,7 @@ class BookViewModel(private val repository: BookRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Fetch favorite books from repository
-     */
+
     private fun fetchFavoriteBooks() {
         viewModelScope.launch {
             repository.favoriteBooks
@@ -87,9 +81,7 @@ class BookViewModel(private val repository: BookRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Fetch downloaded books from repository
-     */
+
     private fun fetchDownloadedBooks() {
         viewModelScope.launch {
             repository.downloadedBooks
@@ -103,9 +95,7 @@ class BookViewModel(private val repository: BookRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Get books by category
-     */
+
     fun getBooksByCategory(category: String) {
         _selectedCategory.value = category
         viewModelScope.launch {
@@ -123,9 +113,7 @@ class BookViewModel(private val repository: BookRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Search books by query
-     */
+
     fun searchBooks(query: String): List<Book> {
         val lowerCaseQuery = query.trim().lowercase()
         return if (lowerCaseQuery.isEmpty()) {
@@ -140,9 +128,7 @@ class BookViewModel(private val repository: BookRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Add a new book
-     */
+
     fun addBook(book: Book) {
         viewModelScope.launch {
             _operationStatus.value = OperationStatus.Loading
@@ -158,9 +144,7 @@ class BookViewModel(private val repository: BookRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Update an existing book
-     */
+
     fun updateBook(book: Book) {
         viewModelScope.launch {
             _operationStatus.value = OperationStatus.Loading
@@ -179,9 +163,7 @@ class BookViewModel(private val repository: BookRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Delete a book
-     */
+
     fun deleteBook(book: Book) {
         viewModelScope.launch {
             _operationStatus.value = OperationStatus.Loading
@@ -201,9 +183,7 @@ class BookViewModel(private val repository: BookRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Toggle favorite status for a book
-     */
+
     fun toggleFavorite(book: Book) {
         viewModelScope.launch {
             try {
@@ -224,9 +204,7 @@ class BookViewModel(private val repository: BookRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Toggle download status for a book
-     */
+
     fun toggleDownload(book: Book) {
         viewModelScope.launch {
             try {
@@ -246,9 +224,26 @@ class BookViewModel(private val repository: BookRepository) : ViewModel() {
         }
     }
 
-    /**
-     * Factory for creating BookViewModel with dependency injection
-     */
+    fun syncBooksFromFirestore() {
+        viewModelScope.launch {
+            _operationStatus.value = OperationStatus.Loading
+            try {
+                repository.syncBooksFromFirestore()
+                _operationStatus.value = OperationStatus.Success
+                // Refresh book lists
+                fetchAllBooks()
+                fetchFavoriteBooks()
+                fetchDownloadedBooks()
+                getBooksByCategory(_selectedCategory.value)
+                Timber.d("Books synced from Firestore")
+            } catch (e: Exception) {
+                _operationStatus.value = OperationStatus.Error("Failed to sync books: ${e.localizedMessage}")
+                Timber.e(e, "Error syncing books from Firestore")
+            }
+        }
+    }
+
+
     class BookViewModelFactory(private val repository: BookRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(BookViewModel::class.java)) {
@@ -260,9 +255,7 @@ class BookViewModel(private val repository: BookRepository) : ViewModel() {
     }
 }
 
-/**
- * Sealed class for representing operation status
- */
+
 sealed class OperationStatus {
     object Idle : OperationStatus()
     object Loading : OperationStatus()

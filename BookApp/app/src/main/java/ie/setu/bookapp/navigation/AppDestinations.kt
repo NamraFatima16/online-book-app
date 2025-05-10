@@ -18,7 +18,12 @@ object AppDestinations {
     // Search and category routes
     const val SEARCH = "search"
     const val CATEGORY = "category/{categoryName}"
+    const val SPLASH = "splash"
 
+    const val BOOK_EDIT = "book_edit/{bookId}"
+    const val BOOK_ADD = "book_add"
+
+    fun bookEditRoute(bookId: Int): String = "book_edit/$bookId"
     fun bookDetailsRoute(bookId: Int): String = "book_details/$bookId"
 
 
