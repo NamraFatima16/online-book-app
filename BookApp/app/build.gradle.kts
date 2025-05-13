@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.hilt.android)
+    alias(libs.plugins.google.services)
 
 }
 
@@ -12,7 +13,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "ie.setu.onlinebookapp"
+        applicationId = "ie.setu.bookapp"
         minSdk = 30
         targetSdk = 35
         versionCode = 1
@@ -61,9 +62,9 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.volley)
+    implementation(libs.firebase.auth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -74,16 +75,13 @@ dependencies {
     ksp(libs.room.compiler)
     ksp(libs.hilt.compiler)
 
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.analytics)
-    // firebase
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth.ktx)
-    implementation(libs.firebase.firestore.ktx)
+    implementation(platform(libs.google.firebase.bom))
 
     implementation(libs.maps.compose)
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
+
+
 
 
 }

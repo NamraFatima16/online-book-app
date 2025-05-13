@@ -52,7 +52,6 @@ fun SearchScreen(
     bookViewModel: BookViewModel,
     onBackClick: () -> Unit,
     onBookClick: (Int) -> Unit,
-    onEditBook: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }

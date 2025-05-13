@@ -17,13 +17,14 @@ import ie.setu.bookapp.view.BookDetailsScreen
 import ie.setu.bookapp.view.BookEditScreen
 import ie.setu.bookapp.view.HomeScreen
 import ie.setu.bookapp.view.LibraryScreen
-import ie.setu.bookapp.view.LoginScreen
 import ie.setu.bookapp.view.ProfileEditScreen
 import ie.setu.bookapp.view.ProfileScreen
-import ie.setu.bookapp.view.RegisterScreen
 import ie.setu.bookapp.view.SearchScreen
-import ie.setu.bookapp.view.SignUpScreen
 import ie.setu.bookapp.view.SplashScreen
+import ie.setu.bookapp.view.login.LoginScreen
+import ie.setu.bookapp.view.login.LoginViewModel
+import ie.setu.bookapp.view.signup.SignUpScreen
+import ie.setu.bookapp.view.signup.SignUpViewModel
 import ie.setu.bookapp.viewmodel.BookViewModel
 import ie.setu.bookapp.viewmodel.UserViewModel
 import timber.log.Timber
@@ -43,6 +44,15 @@ fun AppNavigation(
         factory = BookViewModel.BookViewModelFactory(application.bookRepository)
     )
 
+    val loginViewModel: LoginViewModel = viewModel(
+        factory = LoginViewModel.LoginViewModelFactory(application.firebaseAuth)
+
+    )
+
+    val signUpViewModel: SignUpViewModel = viewModel(
+        factory = SignUpViewModel.SignUpViewModelFactory(application.firebaseAuth)
+    )
+
     NavHost(
         navController = navController,
         startDestination = AppDestinations.SPLASH
@@ -50,7 +60,7 @@ fun AppNavigation(
         // Login Screen
         composable(AppDestinations.LOGIN) {
             LoginScreen(
-                userViewModel = userViewModel,
+                loginViewModel = loginViewModel,
                 onLoginSuccess = {
                     Timber.d("Login successful, navigating to Home")
                     navController.navigate(AppDestinations.HOME) {
@@ -59,39 +69,39 @@ fun AppNavigation(
                 },
                 onSignUpClick = {
                     Timber.d("Navigate to Sign Up")
-                    navController.navigate(AppDestinations.REGISTER)
+                    navController.navigate(AppDestinations.SIGN_UP)
                 }
             )
         }
 
-        // Register Screen
-        composable(AppDestinations.REGISTER) {
-            RegisterScreen(
-                userViewModel = userViewModel,
-                onRegisterSuccess = {
-                    Timber.d("Registration successful, navigating to Home")
-                    navController.navigate(AppDestinations.HOME) {
-                        popUpTo(AppDestinations.REGISTER) { inclusive = true }
-                    }
-                },
-                onBackClick = {
-                    Timber.d("Back to Login")
-                    navController.popBackStack()
-                }
-            )
-        }
+//        // Register Screen
+//        composable(AppDestinations.) {
+//            RegisterScreen(
+//                userViewModel = userViewModel,
+//                onRegisterSuccess = {
+//                    Timber.d("Registration successful, navigating to Home")
+//                    navController.navigate(AppDestinations.HOME) {
+//                        popUpTo(AppDestinations.REGISTER) { inclusive = true }
+//                    }
+//                },
+//                onBackClick = {
+//                    Timber.d("Back to Login")
+//                    navController.popBackStack()
+//                }
+//            )
+//        }
 
         // Alternative Sign Up Screen
         composable(AppDestinations.SIGN_UP) {
             SignUpScreen(
-                userViewModel = userViewModel,
+                signUpViewModel = signUpViewModel,
                 onSignUpSuccess = {
                     Timber.d("Sign up successful, navigating to Home")
                     navController.navigate(AppDestinations.HOME) {
                         popUpTo(AppDestinations.SIGN_UP) { inclusive = true }
                     }
                 },
-                onLoginClick = {
+                onNavigateBackToLogin = {
                     Timber.d("Back to Login")
                     navController.navigate(AppDestinations.LOGIN) {
                         popUpTo(AppDestinations.SIGN_UP) { inclusive = true }
@@ -171,7 +181,14 @@ fun AppNavigation(
                         Timber.d("Navigate to Profile Edit")
                         navController.navigate(AppDestinations.PROFILE_EDIT)
                     },
-                    modifier = Modifier.padding(innerPadding)
+                    modifier = Modifier.padding(innerPadding),
+                    bookViewModel = bookViewModel,
+                    onLogoutClick = {
+                        Timber.d("Navigate to Login screen")
+                        navController.navigate(AppDestinations.LOGIN) {
+                            popUpTo(AppDestinations.LOGIN) { inclusive = true }
+                        }
+                    }
                 )
             }
         }
@@ -252,17 +269,20 @@ fun AppNavigation(
 
         // Search Screen
         composable(AppDestinations.SEARCH) {
-            SearchScreen(
-                bookViewModel = bookViewModel,
-                onBackClick = {
-                    Timber.d("Back from Search")
-                    navController.popBackStack()
-                },
-                onBookClick = { bookId ->
-                    Timber.d("Navigate to Book Details from Search for book: $bookId")
-                    navController.navigate(AppDestinations.bookDetailsRoute(bookId))
-                }
-            )
+            MainAppScaffold(navController = navController) { innerPadding ->
+                SearchScreen(
+                    bookViewModel = bookViewModel,
+                    onBackClick = {
+                        Timber.d("Back from Search")
+                        navController.popBackStack()
+                    },
+                    onBookClick = { bookId ->
+                        Timber.d("Navigate to Book Details from Search for book: $bookId")
+                        navController.navigate(AppDestinations.bookDetailsRoute(bookId))
+                    },
+                    modifier = Modifier.padding(innerPadding)
+                )
+            }
         }
 
         // Category Screen
@@ -281,7 +301,6 @@ fun AppNavigation(
             }
         }
 
-
         composable(AppDestinations.SPLASH) {
             SplashScreen(
                 onNavigateToLogin = {
@@ -296,7 +315,5 @@ fun AppNavigation(
                 }
             )
         }
-
-
     }
 }

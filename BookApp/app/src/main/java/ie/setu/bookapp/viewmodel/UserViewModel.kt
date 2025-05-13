@@ -34,6 +34,10 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
 
     private val firebaseAuthManager = FirebaseAuthManager()
 
+
+
+
+
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _userOperationStatus.value = UserOperationStatus.Loading

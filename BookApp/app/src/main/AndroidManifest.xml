@@ -3,6 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="ie.setu.bookapp">
 
+
+
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+
     <application
 
         android:name="ie.setu.bookapp.BookApplication"
@@ -14,6 +21,8 @@
         android:theme="@style/Theme.BookApp">
 
 
+
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -21,10 +30,6 @@
             android:theme="@style/Theme.BookApp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-                <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-                <uses-permission android:name="android.permission.INTERNET" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 

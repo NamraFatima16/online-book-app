@@ -2,6 +2,7 @@ package ie.setu.bookapp
 
 import android.app.Application
 import androidx.room.Room
+import com.google.firebase.auth.FirebaseAuth
 import ie.setu.bookapp.database.AppDatabase
 import ie.setu.bookapp.model.Book
 import ie.setu.bookapp.model.User
@@ -37,6 +38,9 @@ class BookApplication : Application() {
 
         // Add sample data for testing
         addSampleData()
+    }
+    val firebaseAuth: FirebaseAuth by lazy {
+        FirebaseAuth.getInstance()
     }
 
     private fun addSampleData() {
